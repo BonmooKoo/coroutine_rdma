@@ -1,9 +1,9 @@
 #include "rdma_common.h"
 #include "rdma_verb.h"
+#include "rdma_coroutine.hpp"
 #include "keeper.h"
 #include <sys/mman.h>
 
-#define SIZEOFNODE 4*1024
 #define MAXTHREAD 32
 #define SERVER 1
 //#define TIMECHECK
@@ -103,6 +103,23 @@ int pollWithCQ(ibv_cq *cq, int pollNumber, struct ibv_wc *wc)
 
 	return count;
 }
+
+int pollOnce(ibv_cq *cq, int pollNumber, struct ibv_wc *wc) {
+  int count = ibv_poll_cq(cq, pollNumber, wc);
+  if (count <= 0) {
+    return 0;
+  }
+  if (wc->status != IBV_WC_SUCCESS) {
+    Debug::notifyError("Failed status %s (%d) for wr_id %d",
+                       ibv_wc_status_str(wc->status), wc->status,
+                       (int)wc->wr_id);
+    assert(false);
+    return -1;
+  } else {
+    return count;
+  }
+}
+
 // int client_connection(struct sockaddr_in *s_addr,int server,int thread)
 int client_connection(int client, int thread_num, int thread)
 {
@@ -261,9 +278,6 @@ int client_connection(int client, int thread_num, int thread)
  */
 int rdma_read(uint64_t serveraddress, uint32_t datalength,int server,int thread)
 {
-	// printf("%d) rdma_read %p %lu\n",thread,serveraddress,datalength);
-	
-
 #ifdef TIMECHECK
 	timespec t1, t2;
 	clock_gettime(CLOCK_REALTIME, &t1);
@@ -295,6 +309,58 @@ restart_read:
 	// printf("%d) rkey : %d %lu lkey: %lu\n",thread,server,client_send_wr.wr.rdma.rkey,client_send_sge.lkey);
 	// printf("%d) remoteaddr : %p %p\n",thread,client_send_wr.wr.rdma.remote_addr,server_info[server].address);
 	// printf("%d) cq : %p\n",thread,client_cq[thread]);
+	/* Now we post it */
+	ret = ibv_post_send(client_qp[thread][server],
+						&client_send_wr,
+						&bad_client_send_wr);
+	if (ret)
+	{
+		printf("Failed to read client dst buffer from the master, errno: %d \n",
+				   -errno);
+		return -errno;
+	}
+
+	/* at this point we are expecting 1 work completion for the write */
+	ret=pollWithCQ(client_cq[thread], poll_count[thread]+1, &wc);
+	poll_count[thread]=0;
+
+	if(ret==-1){
+		printf("%d) read poll failed\n",thread);
+		exit(1);
+		//goto restart_read;
+	}
+#ifdef TIMECHECK
+	clock_gettime(CLOCK_REALTIME, &t2);
+	unsigned long timer = (t2.tv_sec - t1.tv_sec) * 1000000000UL + t2.tv_nsec - t1.tv_nsec;
+	readtime[thread] += timer;
+	reads[thread]++;
+	// printf("%d) read_timer %d: %lu %lu\n",thread,server,datalength ,timer);
+#endif
+	return ret;
+}
+
+
+int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int thread,int id)
+{
+	struct ibv_sge client_send_sge;
+	memset(&client_send_sge,0,sizeof(client_send_sge));
+	struct ibv_wc wc;
+	wc.wr_id=id;
+	int ret = -1;
+	client_send_sge.addr = (uint64_t)client_dst_mr[thread]->addr;
+	client_send_sge.length = datalength;
+	client_send_sge.lkey = client_dst_mr[thread]->lkey;
+	ibv_send_wr client_send_wr;
+	ibv_send_wr *bad_client_send_wr;
+	bzero(&client_send_wr, sizeof(client_send_wr));
+	client_send_wr.sg_list = &client_send_sge;
+	client_send_wr.num_sge = 1;
+	client_send_wr.opcode = IBV_WR_RDMA_READ;
+	client_send_wr.send_flags = IBV_SEND_SIGNALED;
+    	
+	/* we have to tell server side info for RDMA */ 
+	client_send_wr.wr.rdma.rkey = server_info[server].rkey;
+	client_send_wr.wr.rdma.remote_addr = server_info[server].address+ serveraddress;
 	/* Now we post it */
 	ret = ibv_post_send(client_qp[thread][server],
 						&client_send_wr,

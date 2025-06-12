@@ -1,4 +1,9 @@
-memcached.conf : 메모리 노드의 ip  ( 이 주소를 통해서 memcached를 실행하고 여기서 key 교환이 이루어짐)
+Coroutine을 사용하여 RDMA를 수행하는 코드
+1개의 Master coroutine과 여러개의 Worker coroutine을 둔다.
 
-restartMemcached : Memcached 서비스 재시작
-restartRNIC : 만약 중간에 코드가 종료된다면, RDMA 자원(QP,CQ,MR)등을 회수 못하는데, RNIC1개가 갖는 QP에는 한계가 존재하여 다 차게되면 QP 할당이 안될 수 있음 이를 위해 초기화
+1. Master Coroutine이 실행
+2. Master Coroutine은 Worker coroutine을 실행
+3. Worker coroutine은 실행해야되는 work를 수행. RDAM request를 post하고 polling 없이 Master에게 제어권을 넘겨줌
+4. Master은 polling을 시도. polling이 되면 해당 request에 해당하는 worker을 깨움 (wr.id 활용)
+5.
+~                
