@@ -1,0 +1,133 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ADDR	rdma_common.h	23;"	d
+ALLOCSIZE	rdma_common.h	20;"	d
+ALLOCSIZE	rdma_verb.h	16;"	d
+CXX	Makefile	/^CXX=g++$/;"	m
+CXXFLAGS	Makefile	/^CXXFLAGS= -O3 $/;"	m
+GID	rdma_common.h	25;"	d
+INCLUDES	Makefile	/^INCLUDES = -I.\/$/;"	m
+Keeper	keeper.cpp	/^Keeper::Keeper(uint32_t maxServer)$/;"	f	class:Keeper
+Keeper	keeper.h	/^class Keeper {$/;"	c
+LDFLAGS	Makefile	/^LDFLAGS=-libverbs -lmemcached -lpthread$/;"	m
+LKEY	rdma_common.h	24;"	d
+LOCAL_ID	rdma_common.h	21;"	d
+MAXCLIENT	rdma_server.cpp	11;"	d	file:
+MAXTHREAD	rdma_verb.cpp	7;"	d	file:
+OBJS_COMMON	Makefile	/^OBJS_COMMON = $(SRCS_COMMON:.cpp=.o)$/;"	m
+QP_NUM	rdma_common.h	22;"	d
+RDMA_COMMON_H	rdma_common.h	2;"	d
+RDMA_Data	rdma_common.h	/^struct RDMA_Data {$/;"	s
+RDMA_VERB_H	rdma_verb.h	2;"	d
+RdmaContext	rdma_common.h	/^  RdmaContext() : ctx(NULL), pd(NULL) {}$/;"	f	struct:RdmaContext
+RdmaContext	rdma_common.h	/^struct RdmaContext {$/;"	s
+SERVER	rdma_verb.cpp	8;"	d	file:
+SERVER_NUM_KEY	keeper.cpp	/^const char *Keeper::SERVER_NUM_KEY = "serverNum";$/;"	m	class:Keeper	file:
+SERVER_NUM_KEY	keeper.h	/^  static const char *SERVER_NUM_KEY;$/;"	m	class:Keeper
+SIZEOFNODE	rdma_verb.cpp	6;"	d	file:
+SRCS_COMMON	Makefile	/^SRCS_COMMON = keeper.cpp rdma_verb.cpp rdma_common.cpp$/;"	m
+TOTALOP	rdma_client.cpp	22;"	d	file:
+__KEEPER__H__	keeper.h	2;"	d
+address	rdma_verb.h	/^    uint64_t address;$/;"	m	struct:serverINFO
+alloc_dst	rdma_common.cpp	/^char* alloc_dst(){$/;"	f
+atomics	rdma_verb.cpp	/^unsigned long atomics[MAXTHREAD];$/;"	v
+atomictime	rdma_verb.cpp	/^unsigned long atomictime[MAXTHREAD];$/;"	v
+changeQueuePairStateToInit	rdma_common.cpp	/^bool changeQueuePairStateToInit(struct ibv_qp* queue_pair) {$/;"	f
+changeQueuePairStateToRTR	rdma_common.cpp	/^bool changeQueuePairStateToRTR(struct ibv_qp* queue_pair, int ib_port, uint32_t destination_qp_number, uint16_t destination_local_id,ibv_gid remoteGid) {$/;"	f
+changeQueuePairStateToRTS	rdma_common.cpp	/^bool changeQueuePairStateToRTS(struct ibv_qp* queue_pair) {$/;"	f
+check_src_dst	rdma_verb.cpp	/^int check_src_dst()$/;"	f
+cleanup_rdma	rdma_client.cpp	/^cleanup_rdma ()$/;"	f
+cleanup_rdma	rdma_server.cpp	/^void cleanup_rdma() {$/;"	f
+client_connection	rdma_verb.cpp	/^int client_connection(int client, int thread_num, int thread)$/;"	f
+client_cq	rdma_verb.cpp	/^struct ibv_cq *client_cq[MAXTHREAD];$/;"	v	typeref:struct:ibv_cq
+client_disconnect_and_clean	rdma_verb.cpp	/^int client_disconnect_and_clean(int threadcount)$/;"	f
+client_dst_mr	rdma_verb.cpp	/^struct ibv_mr *client_src_mr[MAXTHREAD],*client_dst_mr[MAXTHREAD];$/;"	v	typeref:struct:
+client_gid	rdma_server.cpp	/^ibv_gid client_gid[MAXCLIENT];$/;"	v
+client_id	rdma_server.cpp	/^uint16_t client_id[MAXCLIENT];$/;"	v
+client_qp	rdma_verb.cpp	/^struct ibv_qp *client_qp[MAXTHREAD][SERVER];$/;"	v	typeref:struct:ibv_qp
+client_qp_num	rdma_server.cpp	/^uint32_t client_qp_num[MAXCLIENT];$/;"	v
+client_src_mr	rdma_verb.cpp	/^struct ibv_mr *client_src_mr[MAXTHREAD],*client_dst_mr[MAXTHREAD];$/;"	v	typeref:struct:ibv_mr
+completion_queue	rdma_server.cpp	/^struct ibv_cq* completion_queue;$/;"	v	typeref:struct:ibv_cq
+connectMemcached	keeper.cpp	/^bool Keeper::connectMemcached() {$/;"	f	class:Keeper
+contexts	rdma_verb.cpp	/^struct RdmaContext contexts[MAXTHREAD];$/;"	v	typeref:struct:RdmaContext
+createContext	rdma_common.cpp	/^bool createContext(RdmaContext *context, uint8_t port, int gidIndex,$/;"	f
+createQueuePair	rdma_common.cpp	/^struct ibv_qp* createQueuePair(RdmaContext *context,struct ibv_pd* pd, struct ibv_cq* cq) {$/;"	f
+cs_num	rdma_client.cpp	/^int cs_num;$/;"	v
+ctx	rdma_common.h	/^  ibv_context *ctx;$/;"	m	struct:RdmaContext
+curServer	keeper.h	/^  uint16_t curServer;$/;"	m	class:Keeper
+data1	rdma_common.h	/^    uint64_t data1;$/;"	m	struct:RDMA_Data
+data2	rdma_common.h	/^    uint64_t data2;$/;"	m	struct:RDMA_Data
+data3	rdma_common.h	/^    char data3[16];$/;"	m	struct:RDMA_Data
+destroy_Queue	rdma_common.cpp	/^bool destroy_Queue(struct ibv_qp* qp,struct ibv_cq* cq){$/;"	f
+devIndex	rdma_common.h	/^  uint8_t devIndex;$/;"	m	struct:RdmaContext
+disconnectMemcached	keeper.cpp	/^bool Keeper::disconnectMemcached() {$/;"	f	class:Keeper
+dst	rdma_server.cpp	/^char* dst;$/;"	v
+dst	rdma_verb.cpp	/^char* dst[MAXTHREAD];$/;"	v
+getLocalId	rdma_common.cpp	/^uint16_t getLocalId(struct ibv_context* context, int ib_port) {$/;"	f
+getMyIP	keeper.h	/^  std::string getMyIP() const { return this->myIP; }$/;"	f	class:Keeper
+getMyNodeID	keeper.h	/^  uint16_t getMyNodeID() const { return this->myNodeID; }$/;"	f	class:Keeper
+getMyPort	keeper.h	/^  uint16_t getMyPort() const { return this->myPort; }$/;"	f	class:Keeper
+getQueuePairNumber	rdma_common.cpp	/^uint32_t getQueuePairNumber(struct ibv_qp* qp) {$/;"	f
+getServerNR	keeper.h	/^  uint16_t getServerNR() const { return this->maxServer; }$/;"	f	class:Keeper
+get_atomics	rdma_verb.cpp	/^unsigned long get_atomics(int thread){$/;"	f
+get_reads	rdma_verb.cpp	/^unsigned long get_reads(int thread){$/;"	f
+get_writes	rdma_verb.cpp	/^unsigned long get_writes(int thread){$/;"	f
+getdst	rdma_verb.cpp	/^char **getdst()$/;"	f
+getsrc	rdma_verb.cpp	/^char **getsrc()$/;"	f
+gid	rdma_common.h	/^  union ibv_gid gid;$/;"	m	struct:RdmaContext	typeref:union:RdmaContext::ibv_gid
+gidIndex	rdma_common.h	/^  int gidIndex;$/;"	m	struct:RdmaContext
+key	rdma_client.cpp	/^int key[TOTALOP];$/;"	v
+lid	rdma_common.h	/^  uint16_t lid;$/;"	m	struct:RdmaContext
+main	rdma_client.cpp	/^main (int argc, char **argv)$/;"	f
+main	rdma_server.cpp	/^int main(int argc,char* argv[]){$/;"	f
+maxServer	keeper.h	/^  uint32_t maxServer;$/;"	m	class:Keeper
+memFetchAndAdd	keeper.cpp	/^uint64_t Keeper::memFetchAndAdd(const char *key, uint32_t klen) {$/;"	f	class:Keeper
+memGet	keeper.cpp	/^char *Keeper::memGet(const char *key, uint32_t klen, size_t *v_size) {$/;"	f	class:Keeper
+memSet	keeper.cpp	/^void Keeper::memSet(const char *key, uint32_t klen, const char *val,$/;"	f	class:Keeper
+mem_region	rdma_server.cpp	/^struct ibv_mr* mem_region;$/;"	v	typeref:struct:ibv_mr
+memc	keeper.h	/^  memcached_st *memc;$/;"	m	class:Keeper
+myIP	keeper.h	/^  std::string myIP;$/;"	m	class:Keeper
+myNodeID	keeper.h	/^  uint16_t myNodeID;$/;"	m	class:Keeper
+myPort	keeper.h	/^  uint16_t myPort;$/;"	m	class:Keeper
+padd	rdma_verb.h	/^    char padd[4];$/;"	m	struct:serverINFO
+pd	rdma_common.h	/^  ibv_pd *pd;$/;"	m	struct:RdmaContext
+pollWithCQ	rdma_verb.cpp	/^int pollWithCQ(ibv_cq *cq, int pollNumber, struct ibv_wc *wc)$/;"	f
+poll_count	rdma_verb.cpp	/^uint8_t poll_count[MAXTHREAD];$/;"	v
+port	rdma_common.h	/^  uint8_t port;$/;"	m	struct:RdmaContext
+queue_pair	rdma_server.cpp	/^struct ibv_qp* queue_pair[MAXCLIENT];$/;"	v	typeref:struct:ibv_qp
+rdma_CAS	rdma_verb.cpp	/^int rdma_CAS(uint64_t compare, uint64_t swap, uint64_t serveraddress, uint32_t datalength,int server,int thread)$/;"	f
+rdma_CAS_returnvalue	rdma_verb.cpp	/^int rdma_CAS_returnvalue(uint64_t compare, uint64_t swap, uint64_t serveraddress, uint32_t datalength,int server,int thread)$/;"	f
+rdma_FAA	rdma_verb.cpp	/^int rdma_FAA(uint64_t* clientaddress, uint64_t add, uint64_t serveraddress, uint32_t datalength,int server,int thread)$/;"	f
+rdma_atomictime	rdma_verb.cpp	/^unsigned long rdma_atomictime(int thread)$/;"	f
+rdma_read	rdma_verb.cpp	/^int rdma_read(uint64_t serveraddress, uint32_t datalength,int server,int thread)$/;"	f
+rdma_readtime	rdma_verb.cpp	/^unsigned long rdma_readtime(int thread)$/;"	f
+rdma_settime	rdma_verb.cpp	/^void rdma_settime()$/;"	f
+rdma_write	rdma_verb.cpp	/^int rdma_write(uint64_t clientaddress, uint64_t serveraddress, uint32_t datalength,int server,int thread)$/;"	f
+rdma_write_batch	rdma_verb.cpp	/^int rdma_write_batch(uint64_t clientaddress, uint64_t serveraddress, uint32_t datalength,int server,int thread){$/;"	f
+rdma_writetime	rdma_verb.cpp	/^unsigned long rdma_writetime(int thread)$/;"	f
+read_key	rdma_client.cpp	/^int read_key(){$/;"	f
+reads	rdma_verb.cpp	/^unsigned long reads[MAXTHREAD];$/;"	v
+readtime	rdma_verb.cpp	/^unsigned long readtime[MAXTHREAD];$/;"	v
+rkey	rdma_verb.h	/^    uint32_t rkey;$/;"	m	struct:serverINFO
+serverINFO	rdma_verb.h	/^struct serverINFO{$/;"	s
+server_gid	rdma_verb.cpp	/^ibv_gid server_gid[SERVER];$/;"	v
+server_info	rdma_verb.cpp	/^struct serverINFO server_info[SERVER];$/;"	v	typeref:struct:serverINFO
+sigint_handler	rdma_client.cpp	/^sigint_handler (int sig)$/;"	f
+sigint_handler	rdma_server.cpp	/^void sigint_handler(int sig) {$/;"	f
+src	rdma_verb.cpp	/^char* src[MAXTHREAD];$/;"	v
+test_cas	rdma_client.cpp	/^test_cas (int id)$/;"	f
+test_read	rdma_client.cpp	/^test_read (int id,int reader)$/;"	f
+test_smallread	rdma_client.cpp	/^test_smallread (int id)$/;"	f
+thread_setup	rdma_client.cpp	/^thread_setup (int id)$/;"	f
+threadcount	rdma_client.cpp	/^int threadcount;$/;"	v
+trim	keeper.cpp	/^std::string trim(const std::string &s) {$/;"	f
+type1	rdma_common.h	/^    uint8_t type1;$/;"	m	struct:RDMA_Data
+type2	rdma_common.h	/^    uint8_t type2;$/;"	m	struct:RDMA_Data
+type3	rdma_common.h	/^    uint8_t type3;$/;"	m	struct:RDMA_Data
+writes	rdma_verb.cpp	/^unsigned long writes[MAXTHREAD];$/;"	v
+writetime	rdma_verb.cpp	/^unsigned long writetime[MAXTHREAD];$/;"	v
+~Keeper	keeper.cpp	/^Keeper::~Keeper() {$/;"	f	class:Keeper
