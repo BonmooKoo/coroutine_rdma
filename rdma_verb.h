@@ -21,7 +21,9 @@ struct serverINFO{
 };
 char** getdst();
 int check_src_dst();
+
 int pollWithCQ(ibv_cq *cq, int pollNumber, struct ibv_wc *wc);
+int pollOnce(ibv_cq *cq, int pollNumber, struct ibv_wc *wc);
 int client_connection(int client, int thread_num, int thread);
 
 int rdma_read(uint64_t serveraddress,uint32_t datalength,int server,int thread);

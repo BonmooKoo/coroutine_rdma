@@ -119,22 +119,21 @@ main (int argc, char **argv)
   int option;
   int test;
   int reader=1,caser=0,smallreader=0,cs_num=0;
-  while ((option = getopt (argc, argv, "c:t:")) != -1)
-    {
+  while ((option = getopt (argc, argv, "c:t:")) != -1){
       // alloc dst
-      switch (option)
-	{
-	case 'c':
-	  cs_num = atoi (optarg);
-	  break;
-	case 't':
-	  threadcount = atoi (optarg);
-	  break;
-  default:
-	  print_usage(argv[0]);
-	  break;
-	}
-    }
+    switch (option)
+        {
+        case 'c':
+          cs_num = atoi (optarg);
+          break;
+        case 't':
+          threadcount = atoi (optarg);
+          break;
+        default:
+          print_usage(argv[0]);
+          break;
+        }
+  }
   signal (SIGINT, sigint_handler);
   read_key();
   printf("read key end\n");
@@ -153,8 +152,8 @@ main (int argc, char **argv)
   clock_gettime (CLOCK_MONOTONIC_RAW, &t1);
   for (int i = 0; i < threadcount; i++)
   {
-    threadlist[i] = thread worker_thr(int cpu_id,int thread_id);
-  }
+    //run_coroutine(int thread_id,int coro_count, int* key[],int threadcount)
+    threadlist[i] = thread (&run_coroutine,i,20,&key,threadcount);
   for (int i = 0; i < threadcount; i++)
   {
     threadlist[i].join ();

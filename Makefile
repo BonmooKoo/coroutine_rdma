@@ -4,7 +4,7 @@ LDFLAGS=-libverbs -lmemcached -lpthread
 CXXFLAGS= -std=gnu++11 -O3  
 INCLUDES = -I./
 
-SRCS_COMMON = keeper.cpp rdma_verb.cpp rdma_common.cpp zipf.cpp rdma_coroutine.cpp
+SRCS_COMMON = keeper.cpp rdma_verb.cpp rdma_common.cpp zipf.cpp
 OBJS_COMMON = $(SRCS_COMMON:.cpp=.o)
 
 all: client server
