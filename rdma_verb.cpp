@@ -116,8 +116,13 @@ int pollOnce(ibv_cq *cq, int pollNumber, struct ibv_wc *wc) {
     assert(false);
     return -1;
   } else {
-    return count;
+    return wc.wr_id;
   }
+}
+int poll_coroutine(int thread_id){
+	struct ibv_wc wc;
+	ret=pollWithCQ(client_cq[thread_id], poll_count[thread_id]+1, &wc);
+	return wc.wr_id;
 }
 
 // int client_connection(struct sockaddr_in *s_addr,int server,int thread)
@@ -340,12 +345,12 @@ restart_read:
 }
 
 
-int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int thread,int id)
+int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int thread,int coro_id)
 {
 	struct ibv_sge client_send_sge;
 	memset(&client_send_sge,0,sizeof(client_send_sge));
 	struct ibv_wc wc;
-	wc.wr_id=id;
+	wc.wr_id=coro_id;
 	int ret = -1;
 	client_send_sge.addr = (uint64_t)client_dst_mr[thread]->addr;
 	client_send_sge.length = datalength;

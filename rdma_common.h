@@ -18,6 +18,7 @@
 #include <infiniband/verbs.h>
 
 #define ALLOCSIZE 1*1024*1024*1024 //64GB 
+#define SIZEOFNODE 1024 
 #define LOCAL_ID 1
 #define QP_NUM 2
 #define ADDR 3

@@ -11,30 +11,34 @@ using coro_t    = boost::coroutines2::symmetric_coroutine<void>;
 using CoroCall  = coro_t::call_type;
 using CoroYield = coro_t::yield_type;
 
+thread_local CoroCall master;
+thread_local int thread_id
+//thread 별로 다른 key 갖음
 int* key;
-
 // 전역 카운터들
-static uint64_t g_total_ops   = 0;
+static uint64_t g_total_ops = 0;
+static int g_coro_cnt;
+//for debug
 static std::atomic<uint64_t> g_ops_started{0};
+//count how many 
 static std::atomic<uint64_t> g_ops_finished{0};
 
+static int get_key(){
+   uint64_t idx = g_ops_started.fetch_add(1, std::memory_order_relaxed);
+   idx=idx%g_total_ops;//g_total_ops = TOTALOP = 32M
+   return key[idx];
+}
 // 2) Worker 코루틴 본체
 static void coro_worker(CoroYield &yield,
                         RequestGen gen,
-                        int coro_id,
-                        bool lock_bench)
+                        int coro_id)
 {
-  // 예시: RequestGen 인터페이스에 `next()` 가 있다고 가정
-  // auto r = reinterpret_cast<YourGenType*>(gen)->next();
-
-  while (g_ops_started < g_total_ops) {
-    // 1) next request
-    // auto req = reinterpret_cast<YourGenType*>(gen)->next();
-    ++g_ops_started;
-
+  int key;
+  while(g_ops_started < g_total_ops){
+   //1) get key
+    key=get_key();
     // 2) RDMA post (pseudo code)
-    // uint64_t wr_id = post_send(req);
-    uint64_t wr_id = coro_id * 100000 + g_ops_started; // 예시 wr_id
+    rdma_read_nopoll((key % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,thread_id,coro_id);
 
     // 3) 완료 대기: master 로 제어권 넘기기
     yield();
@@ -57,36 +61,36 @@ static void coro_master(CoroYield &yield,
     yield(worker[i]);
   }
 
-  // 3-2) 이벤트 루프: CQ 폴링 대신 here pseudo‐poll
+  // 3-2) 이벤트 루프: CQ 폴링l
   while (g_ops_finished < g_total_ops) {
-    // 실제 코드: PollRdmaCqOnce(wr_id)
-    // wr_id 를 받아서, 어떤 워커인지 mapping 후 resume
-    int next_id = g_ops_finished % coro_cnt; // 예시 순환
+    int next_id=poll_coroutine(thread_id);
     yield(worker[next_id]);
   }
 }
 // run_coroutine(int thread_id,int coro_cnt, int* key[],int threadcount)
 // 4) run_coroutine 함수: Tree::run_coroutine 과 동일한 형태
-static void run_coroutine(int id,
+static void run_coroutine(int thread_id,
                           int coro_cnt,
                           int* key_arr,
-                          int threadcount)
+                          int threadcount,
+                          int total_ops
+                        )
 {
 //0.key
   key=key_arr;
+  g_total_ops=total_ops;
   //1. coroutine vector 생성
   std::vector<CoroCall> worker(coro_cnt);
 
   //2. Client 생성
   for (int i = 0; i < coro_cnt; ++i) {
-    worker[i] = CoroCall(std::bind(&coro_worker, _1, gen, i, lock_bench));
+    worker[i] = CoroCall(std::bind(&coro_worker,/*yield*/ _1,/*coro_id*/ i));
   }
 
   // 4-2) 마스터 코루틴 생성
-  CoroCall master = CoroCall(
+  master = CoroCall(
     std::bind(&coro_master, _1, coro_cnt, std::ref(worker))
   );
-
   // 4-3) 최초 진입
   master();
 }

@@ -1,5 +1,6 @@
 #include "rdma_common.h"
 #include "rdma_verb.h"
+#include "rdma_coroutine.hpp"
 #include "zipf.hpp"
 #include <iostream>
 #include <fstream>
@@ -22,7 +23,6 @@
 using namespace std;
 #define MAXTHREAD 32
 #define TOTALOP 32000000//32M
-#define SIZEOFNODE 1024 
 //#define SIZEOFNODE 4096 
 int* key=new int[TOTALOP];
 int cs_num;
