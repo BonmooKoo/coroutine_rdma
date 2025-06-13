@@ -1,8 +1,4 @@
 #include "rdma_coroutine.hpp"
-// 1) Boost.Coroutine2 타입 정의
-using coro_t    = boost::coroutines::symmetric_coroutine<void>;
-using CoroCall  = coro_t::call_type;
-using CoroYield = coro_t::yield_type;
 
 thread_local CoroCall master;
 thread_local int thread_id

@@ -110,18 +110,14 @@ int pollOnce(ibv_cq *cq, int pollNumber, struct ibv_wc *wc) {
     return 0;
   }
   if (wc->status != IBV_WC_SUCCESS) {
-    Debug::notifyError("Failed status %s (%d) for wr_id %d",
-                       ibv_wc_status_str(wc->status), wc->status,
-                       (int)wc->wr_id);
-    assert(false);
     return -1;
   } else {
-    return wc.wr_id;
+    return wc->wr_id;
   }
 }
 int poll_coroutine(int thread_id){
 	struct ibv_wc wc;
-	ret=pollWithCQ(client_cq[thread_id], poll_count[thread_id]+1, &wc);
+	pollWithCQ(client_cq[thread_id], poll_count[thread_id]+1, &wc);
 	return wc.wr_id;
 }
 
