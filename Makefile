@@ -1,11 +1,16 @@
 #make CXXFLAGS="-std=gnu++11 -O3 -I./"
 CXX=g++
-LDFLAGS= -lboost_coroutine\
+CXXFLAGS= -std=gnu++11 -O3\
+	-I/usr/local/include  
+LDFLAGS= \
+ -L/usr/local/lib \
+-Wl,-rpath,/usr/local/lib \
+ -lboost_coroutine\
  -lboost_context\
+-lboost_system    \
  -libverbs\
  -lmemcached\
  -lpthread
-CXXFLAGS= -std=gnu++11 -O3  
 INCLUDES = -I./
 
 SRCS_COMMON = keeper.cpp rdma_coroutine.cpp rdma_verb.cpp rdma_common.cpp zipf.cpp 
