@@ -9,6 +9,7 @@
 using coro_t    = boost::coroutines::symmetric_coroutine<void>;
 using CoroCall  = coro_t::call_type;
 using CoroYield = coro_t::yield_type;
+using namespace std::placeholders;
 
 void run_coroutine(int thread_id,
                           int coro_cnt,

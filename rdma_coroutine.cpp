@@ -1,9 +1,8 @@
 #include "rdma_coroutine.hpp"
-
 thread_local CoroCall master;
-thread_local int thread_id
+thread_local int thread_id;
 //thread 별로 다른 key 갖음
-int* key;
+static int* key=nullptr;
 // 전역 카운터들
 static uint64_t g_total_ops = 0;
 static int g_coro_cnt;
@@ -19,7 +18,6 @@ static int get_key(){
 }
 // 2) Worker 코루틴 본체
 static void coro_worker(CoroYield &yield,
-                        RequestGen gen,
                         int coro_id)
 {
   int key;

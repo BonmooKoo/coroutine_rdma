@@ -24,7 +24,7 @@ using namespace std;
 #define MAXTHREAD 32
 #define TOTALOP 32000000//32M
 //#define SIZEOFNODE 4096 
-int* key=new int[TOTALOP];
+static int* key=new int[TOTALOP];
 int cs_num;
 int threadcount;
 uint64_t read_lat[MAXTHREAD][TOTALOP/MAXTHREAD]={0};
@@ -130,7 +130,6 @@ main (int argc, char **argv)
           threadcount = atoi (optarg);
           break;
         default:
-          print_usage(argv[0]);
           break;
         }
   }
@@ -152,8 +151,9 @@ main (int argc, char **argv)
   clock_gettime (CLOCK_MONOTONIC_RAW, &t1);
   for (int i = 0; i < threadcount; i++)
   {
-    //run_coroutine(int thread_id,int coro_count, int* key[],int threadcount)
-    threadlist[i] = thread (&run_coroutine,i,20,&key,threadcount);
+   //run_coroutine(int thread_id,int coro_cnt,int* key_arr,int threadcount,int total_ops);
+    threadlist[i] = thread (&run_coroutine,i,20,key,threadcount,TOTALOP);
+  }
   for (int i = 0; i < threadcount; i++)
   {
     threadlist[i].join ();
