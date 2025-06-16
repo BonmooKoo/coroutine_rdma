@@ -117,9 +117,14 @@ int pollOnce(ibv_cq *cq, int pollNumber, struct ibv_wc *wc) {
 }
 int poll_coroutine(int thread_id){
 	struct ibv_wc wc;
-	int ret = pollOnce(client_cq[thread_id], 1, &wc);
-	if(ret==-1){
+	int ret = ibv_poll_cq(client_cq[thread_id], 1, &wc);
+	if(ret==-1|wc.status !=IBV_WC_SUCCESS){
 		//poll failed 
+		printf("poll_coroutine : Failed status %s (%d) for wr_id %d",ibv_wc_status_str(wc.status), wc.status,(int)wc.wr_id);
+		exit(1);	
+	}
+	else if (ret == 0 ){
+		//CQ is empty 
 		return -1;
 	}
 	else{
@@ -363,7 +368,7 @@ int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int 
 	client_send_wr.opcode = IBV_WR_RDMA_READ;
 	client_send_wr.send_flags = IBV_SEND_SIGNALED;
         //코루틴위해서 추가
-	client_send_wr.wr_id=coro_id+1;
+	client_send_wr.wr_id=coro_id;
 	/* we have to tell server side info for RDMA */ 
 	client_send_wr.wr.rdma.rkey = server_info[server].rkey;
 	client_send_wr.wr.rdma.remote_addr = server_info[server].address+ serveraddress;
@@ -373,8 +378,8 @@ int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int 
 						&bad_client_send_wr);
 	if (ret)
 	{
-		printf("Ret : %d Failed to read client dst buffer from the master, errno: %d \n",
-				 ret,  -errno);
+		printf("(rdma_read_nopoll)Worker[%d] Ret : %d Failed to read client dst buffer from the master, errno: %d \n",
+				 coro_id,ret,  -errno);
 		return -errno;
 	}
 
