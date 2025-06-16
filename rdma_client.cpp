@@ -31,7 +31,7 @@ uint64_t read_lat[MAXTHREAD][TOTALOP/MAXTHREAD]={0};
 uint64_t smallread_lat[MAXTHREAD][TOTALOP/MAXTHREAD]={0};
 uint64_t cas_lat[MAXTHREAD][TOTALOP/MAXTHREAD]={0};
 int cas_try[MAXTHREAD][TOTALOP/MAXTHREAD]={0};
-
+static std::atomic<uint64_t> cur_ops{0};
 int read_key(){
     const int key_range = 1600000;
     // 1) Zipf
@@ -59,6 +59,9 @@ int read_key(){
     */
     return 0;
 }
+static int get_key(){
+	return key[cur_ops++];
+}
 void
 cleanup_rdma ()
 {
@@ -79,6 +82,19 @@ thread_setup (int id)
   client_connection (cs_num, threadcount, id);
   return 0;
 }
+
+int
+test_read (int id)
+{
+  int count=0;
+  printf ("[%d]START\n", id);
+  while (cur_ops<TOTALOP)
+    {
+      int suc = rdma_read ((get_key() % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE, SIZEOFNODE, 0, id);	//return current value
+    }
+  printf ("[%d]END\n", id);
+}
+
 auto filter_and_analyze = [](uint64_t lat_arr[][TOTALOP / MAXTHREAD], const char* label, int count) {
     std::vector<uint64_t> merged;
     for (int i = 0; i < MAXTHREAD; ++i) {
