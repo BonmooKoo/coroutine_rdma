@@ -126,9 +126,9 @@ struct ibv_qp* createQueuePair(RdmaContext *context,struct ibv_pd* pd, struct ib
   attr.recv_cq = cq;
   attr.pd = context->pd;
   attr.comp_mask = IBV_QP_INIT_ATTR_CREATE_FLAGS |IBV_QP_INIT_ATTR_PD;
-  attr.cap.max_send_wr = 2;
+  attr.cap.max_send_wr = 32;
   attr.cap.max_recv_wr = 1;
-  attr.cap.max_send_sge = 1;
+  attr.cap.max_send_sge = 32;
   attr.cap.max_recv_sge = 1;
 //  attr.cap.max_inline_data = 256;
 

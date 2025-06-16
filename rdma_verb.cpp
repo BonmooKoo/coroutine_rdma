@@ -378,11 +378,30 @@ int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int 
 						&bad_client_send_wr);
 	if (ret)
 	{
-		printf("(rdma_read_nopoll)Worker[%d] Ret : %d Failed to read client dst buffer from the master, errno: %d \n",
-				 coro_id,ret,  -errno);
+		printf("(rdma_read_nopoll)Worker[%d] Failed to read client dst buffer from the master, ret : %d/\ 
+ 													errno: %d/\ 
+													SGE.addr = %p, length = %d, lkey = 0x%x\n",
+				 coro_id,
+				ret,
+				-errno,
+				client_dst_mr[thread]->addr,
+       				client_dst_mr[thread]->length,
+       				client_dst_mr[thread]->lkey
+					);
 		return -errno;
 	}
 
+	/*
+	        struct ibv_wc wc;
+        ret=pollWithCQ(client_cq[thread], poll_count[thread]+1, &wc);
+        poll_count[thread]=0;
+
+        if(ret==-1){
+                printf("%d) read poll failed\n",thread);
+                exit(1);
+                //goto restart_read;
+        }
+	*/
 	return ret;
 }
 
