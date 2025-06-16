@@ -117,8 +117,14 @@ int pollOnce(ibv_cq *cq, int pollNumber, struct ibv_wc *wc) {
 }
 int poll_coroutine(int thread_id){
 	struct ibv_wc wc;
-	pollWithCQ(client_cq[thread_id], poll_count[thread_id]+1, &wc);
-	return wc.wr_id;
+	int ret = pollOnce(client_cq[thread_id], 1, &wc);
+	if(ret==-1){
+		//poll failed 
+		return -1;
+	}
+	else{
+		return wc.wr_id;
+	}
 }
 
 // int client_connection(struct sockaddr_in *s_addr,int server,int thread)
@@ -345,8 +351,6 @@ int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int 
 {
 	struct ibv_sge client_send_sge;
 	memset(&client_send_sge,0,sizeof(client_send_sge));
-	struct ibv_wc wc;
-	wc.wr_id=coro_id;
 	int ret = -1;
 	client_send_sge.addr = (uint64_t)client_dst_mr[thread]->addr;
 	client_send_sge.length = datalength;
@@ -358,7 +362,8 @@ int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int 
 	client_send_wr.num_sge = 1;
 	client_send_wr.opcode = IBV_WR_RDMA_READ;
 	client_send_wr.send_flags = IBV_SEND_SIGNALED;
-    	
+        //코루틴위해서 추가
+	client_send_wr.wr_id=coro_id+1;
 	/* we have to tell server side info for RDMA */ 
 	client_send_wr.wr.rdma.rkey = server_info[server].rkey;
 	client_send_wr.wr.rdma.remote_addr = server_info[server].address+ serveraddress;
@@ -368,27 +373,11 @@ int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int 
 						&bad_client_send_wr);
 	if (ret)
 	{
-		printf("Failed to read client dst buffer from the master, errno: %d \n",
-				   -errno);
+		printf("Ret : %d Failed to read client dst buffer from the master, errno: %d \n",
+				 ret,  -errno);
 		return -errno;
 	}
 
-	/* at this point we are expecting 1 work completion for the write */
-	ret=pollWithCQ(client_cq[thread], poll_count[thread]+1, &wc);
-	poll_count[thread]=0;
-
-	if(ret==-1){
-		printf("%d) read poll failed\n",thread);
-		exit(1);
-		//goto restart_read;
-	}
-#ifdef TIMECHECK
-	clock_gettime(CLOCK_REALTIME, &t2);
-	unsigned long timer = (t2.tv_sec - t1.tv_sec) * 1000000000UL + t2.tv_nsec - t1.tv_nsec;
-	readtime[thread] += timer;
-	reads[thread]++;
-	// printf("%d) read_timer %d: %lu %lu\n",thread,server,datalength ,timer);
-#endif
 	return ret;
 }
 

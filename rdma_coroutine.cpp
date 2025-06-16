@@ -1,4 +1,6 @@
 #include "rdma_coroutine.hpp"
+
+//coroutine
 thread_local CoroCall master;
 thread_local int thread_id;
 //thread 별로 다른 key 갖음
@@ -8,8 +10,8 @@ static uint64_t g_total_ops = 0;
 static int g_coro_cnt;
 //for debug
 static std::atomic<uint64_t> g_ops_started{0};
-//count how many 
 static std::atomic<uint64_t> g_ops_finished{0};
+
 
 static int get_key(){
    uint64_t idx = g_ops_started.fetch_add(1, std::memory_order_relaxed);
@@ -25,17 +27,17 @@ static void coro_worker(CoroYield &yield,
    //1) get key
     key=get_key();
     // 2) RDMA post (pseudo code)
-    rdma_read_nopoll((key % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,thread_id,coro_id);
-
+    printf("Worker[%d] : post read\n",coro_id);
+    rdma_read_nopoll((key % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,thread_id,coro_id+1);
     // 3) 완료 대기: master 로 제어권 넘기기
-    yield();
-
+    yield(master);
+    printf("Worker[%d] : read fin\n",coro_id);
     // (resume 후) 후처리
     ++g_ops_finished;
   }
 
   // 루프 종료 후에도 master에게 복귀
-  yield();
+  yield(master);
 }
 
 // 3) Master 코루틴 본체
@@ -45,13 +47,21 @@ static void coro_master(CoroYield &yield,
 {
   // 3-1) 초기 실행: 각 워커를 한 번 깨워서 시작하게 만듦
   for (int i = 0; i < coro_cnt; ++i) {
-    yield(worker[i]);
+    	printf("Master : started Worker Coroutine %d\n",i);
+	yield(worker[i]);
   }
 
   // 3-2) 이벤트 루프: CQ 폴링l
   while (g_ops_finished < g_total_ops) {
+    printf("Master :try to poll Job\n");
     int next_id=poll_coroutine(thread_id);
-    yield(worker[next_id]);
+    if(next_id<=0){
+	continue;
+    }
+    else{
+    printf("Master :polled Job for coro_id %d \n",next_id);
+    yield(worker[next_id-1]);
+    }
   }
 }
 // run_coroutine(int thread_id,int coro_cnt, int* key[],int threadcount)
