@@ -168,7 +168,8 @@ main (int argc, char **argv)
   for (int i = 0; i < threadcount; i++)
   {
    //run_coroutine(int thread_id,int coro_cnt,int* key_arr,int threadcount,int total_ops);
-    threadlist[i] = thread (&run_coroutine,i,3,key,threadcount,TOTALOP);
+    threadlist[i] = thread (&run_coroutine,i,20,key,threadcount,TOTALOP);
+    //threadlist[i] = thread (&test_read,i);
   }
   for (int i = 0; i < threadcount; i++)
   {
