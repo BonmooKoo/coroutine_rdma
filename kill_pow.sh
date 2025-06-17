@@ -1,2 +1,3 @@
-ps aux | grep "[i]pmitool"
-ps aux | grep "[p]erf stat"
+pkill -f "ipmitool dcmi power reading"
+pkill -f "perf stat"
+pkill -f "./client"

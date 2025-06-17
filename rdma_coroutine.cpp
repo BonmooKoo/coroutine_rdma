@@ -3,20 +3,17 @@
 //coroutine
 thread_local CoroCall master;
 thread_local int thread_id;
-//thread 별로 다른 key 갖음
-static int* key=nullptr;
-// 전역 카운터들
-static uint64_t g_total_ops = 0;
-static int g_coro_cnt;
-//for debug
-static std::atomic<uint64_t> g_ops_started{0};
-static std::atomic<uint64_t> g_ops_finished{0};
+thread_local static int* key=nullptr;
+thread_local static uint64_t g_total_ops = 0;
+thread_local static std::atomic<uint64_t> g_ops_started{0};
+thread_local static std::atomic<uint64_t> g_ops_finished{0};
 
 
 static int get_key(){
    uint64_t idx = g_ops_started.fetch_add(1, std::memory_order_relaxed);
+   //printf("idx : %d\n",idx);
    idx=idx%g_total_ops;//g_total_ops = TOTALOP = 32M
-   return key[idx];
+   return key[g_total_ops*thread_id+idx];
 }
 // 2) Worker 코루틴 본체
 static void coro_worker(CoroYield &yield,
@@ -75,7 +72,19 @@ void run_coroutine(int thread_id,
                           int total_ops
                         )
 {
-//0.key
+  //bind thread
+  pthread_t this_thread = pthread_self();
+
+    // CPU 집합 만들기
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(thread_id, &cpuset);
+  int ret = pthread_setaffinity_np(this_thread, sizeof(cpu_set_t), &cpuset);
+    if (ret != 0) {
+        perror("pthread_setaffinity_np");
+    }
+
+  //0.key
   key=key_arr;
   g_total_ops=total_ops;
   //1. coroutine vector 생성

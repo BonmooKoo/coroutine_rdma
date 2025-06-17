@@ -86,6 +86,15 @@ thread_setup (int id)
 int
 test_read (int id)
 {
+  pthread_t this_thread = pthread_self();
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(id,&cpuset);
+  int ret = pthread_setaffinity_np(this_thread, sizeof(cpu_set_t), &cpuset);
+  if(ret!=0){
+	perror("pthread_setaffinity_np");
+  }
+
   int count=0;
   printf ("[%d]START\n", id);
   while (cur_ops<TOTALOP)
@@ -134,17 +143,21 @@ main (int argc, char **argv)
 {
   int option;
   int test;
+  int coroutine;
   int reader=1,caser=0,smallreader=0,cs_num=0;
-  while ((option = getopt (argc, argv, "c:t:")) != -1){
+  while ((option = getopt (argc, argv, "n:t:c:")) != -1){
       // alloc dst
     switch (option)
         {
-        case 'c':
+        case 'n':
           cs_num = atoi (optarg);
           break;
         case 't':
           threadcount = atoi (optarg);
           break;
+	case 'c':
+	  coroutine = atoi (optarg);
+	  break;
         default:
           break;
         }
@@ -168,8 +181,12 @@ main (int argc, char **argv)
   for (int i = 0; i < threadcount; i++)
   {
    //run_coroutine(int thread_id,int coro_cnt,int* key_arr,int threadcount,int total_ops);
-    threadlist[i] = thread (&run_coroutine,i,20,key,threadcount,TOTALOP);
-    //threadlist[i] = thread (&test_read,i);
+   if(coroutine!=0){
+	 threadlist[i] = thread (&run_coroutine,i,coroutine,key,threadcount,TOTALOP/threadcount);
+   }
+   else{
+	threadlist[i] = thread (&test_read,i);
+   }
   }
   for (int i = 0; i < threadcount; i++)
   {
