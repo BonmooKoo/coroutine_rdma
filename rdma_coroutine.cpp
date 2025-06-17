@@ -65,7 +65,7 @@ static void coro_master(CoroYield &yield,
 }
 // run_coroutine(int thread_id,int coro_cnt, int* key[],int threadcount)
 // 4) run_coroutine 함수: Tree::run_coroutine 과 동일한 형태
-void run_coroutine(int thread_id,
+void run_coroutine(int tid,
                           int coro_cnt,
                           int* key_arr,
                           int threadcount,
@@ -74,7 +74,7 @@ void run_coroutine(int thread_id,
 {
   //bind thread
   pthread_t this_thread = pthread_self();
-  thread_id = threadcount;
+  thread_id = tid;
     // CPU 집합 만들기
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
