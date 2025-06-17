@@ -378,10 +378,10 @@ int rdma_read_nopoll(uint64_t serveraddress, uint32_t datalength,int server,int 
 						&bad_client_send_wr);
 	if (ret)
 	{
-		printf("(rdma_read_nopoll)Worker[%d] Failed to read client dst buffer from the master, ret : %d/\ 
+		printf("(rdma_read_nopoll)Worker[%d %d] Failed to read client dst buffer from the master, ret : %d/\ 
  													errno: %d/\ 
 													SGE.addr = %p, length = %d, lkey = 0x%x\n",
-				 coro_id,
+				thread, coro_id,
 				ret,
 				-errno,
 				client_dst_mr[thread]->addr,

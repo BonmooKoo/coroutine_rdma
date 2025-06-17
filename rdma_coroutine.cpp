@@ -74,7 +74,7 @@ void run_coroutine(int thread_id,
 {
   //bind thread
   pthread_t this_thread = pthread_self();
-
+  thread_id = threadcount;
     // CPU 집합 만들기
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
@@ -89,7 +89,7 @@ void run_coroutine(int thread_id,
   g_total_ops=total_ops;
   //1. coroutine vector 생성
   std::vector<CoroCall> worker(coro_cnt);
-
+ 
   //2. Client 생성
   for (int i = 0; i < coro_cnt; ++i) {
     worker[i] = CoroCall(std::bind(&coro_worker,/*yield*/ _1,/*coro_id*/ i));
