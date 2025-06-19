@@ -65,8 +65,8 @@ void rdma_settime()
 }
 int check_src_dst()
 {
-	printf("src : %s \n ", src);
-	printf("dst : %s \n ", dst);
+	//printf("src : %s \n ", src);
+	//printf("dst : %s \n ", dst);
 	return memcmp((void *)src, (void *)dst, 8);
 }
 char **getdst()
@@ -135,7 +135,7 @@ int poll_coroutine(int thread_id){
 // int client_connection(struct sockaddr_in *s_addr,int server,int thread)
 int client_connection(int client, int thread_num, int thread)
 {
-	printf("connection start on %d\n", thread + client * thread_num);
+	//printf("connection start on %d\n", thread + client * thread_num);
 	int ret;
 	if(!createContext(&contexts[thread],1,3,0)){
 		printf("createContext failed\n");
@@ -160,20 +160,20 @@ int client_connection(int client, int thread_num, int thread)
 		printf("memcache connect fail\n");
                 exit(1);
 	}
-	printf("memcache connected\n");
+	//printf("memcache connected\n");
 	//printf("Here\n");
 	struct RDMA_Data* rdma_attr=(struct RDMA_Data*)malloc(sizeof(struct RDMA_Data));
 	//xchange metadata
 	//get from server
 	for(int i=0;i<SERVER;i++){
-		printf("Get from server %d...\n", i);
+		//printf("Get from server %d...\n", i);
 		int server_key=1000+500*i+thread+(client*thread_num);// ex client server 2 의 thread 3 = total thread의 11번째 
 		char server[4];
 		sprintf(server,"%d",server_key);
 		size_t size=sizeof(struct RDMA_Data);
-		printf("get cache\n");
+		//printf("get cache\n");
                 char* attr=memcache.memGet(server,4,&size);
-		printf("get\n");
+		//printf("get\n");
                 memcpy(rdma_attr,attr,sizeof(struct RDMA_Data));
 		if(rdma_attr->type1==QP_NUM){
 			server_qp_num[i]=rdma_attr->data1;
@@ -184,12 +184,12 @@ int client_connection(int client, int thread_num, int thread)
 			server_qp_num[i]=rdma_attr->data2;
 			memcpy(&server_gid[i],&rdma_attr->data3,16);
 		}
-		printf("Done\n");
+		//printf("Done\n");
 		//printf("Server%d : id : %lu qp_num:%lu\n",i,server_id[i],server_qp_num[i]);
 	}
 	//send to server
 	for(int i=0;i<SERVER;i++){
-		printf("Send to server %d...", i);
+		//printf("Send to server %d...", i);
 		uint32_t my_qp_num=getQueuePairNumber(client_qp[thread][i]);
 		//send(my_qp_num,my_local_id);
 		int client_key=3000+500*i+thread+client*(thread_num);
@@ -204,33 +204,33 @@ int client_connection(int client, int thread_num, int thread)
 		rdma_attr->type2=GID;
 		memcpy(&rdma_attr->data3,&contexts[thread].gid,16);
 		memcache.memSet(cl_key,4,(char*)rdma_attr,sizeof(struct RDMA_Data));
-		printf("Done\n");
+		//printf("Done\n");
 	}
 
 	for(int i=0;i<SERVER;i++){
-		printf("changeQueuePairStateToRTR %d...", i);
+		//printf("changeQueuePairStateToRTR %d...", i);
 		if(!changeQueuePairStateToRTR(client_qp[thread][i],1,server_qp_num[i],server_id[i],server_gid[i])){
 			printf("Queue Pair RTR failed %d\n",errno);
 		}
-		printf("Done\n");
+		//printf("Done\n");
 	}
 
-	printf("src malloc...");
+	//printf("src malloc...");
 	src[thread]=(char*)malloc(SIZEOFNODE);
 	
 	if(!src[thread]){
 		printf("src alloc wrong!\n");
 		exit(1);
 	}
-	printf("Done\n");
+	//printf("Done\n");
 
-	printf("dst malloc...");
+	//printf("dst malloc...");
 	dst[thread]=(char*)malloc(SIZEOFNODE);	
 	if(!dst[thread]){
 		printf("dst alloc wrong!\n");
 		exit(1);
 	}
-	printf("Done\n");
+	//printf("Done\n");
 
 	client_src_mr[thread]=ibv_reg_mr(contexts[thread].pd, src[thread], SIZEOFNODE, 
 										//static_cast<ibv_access_flags>

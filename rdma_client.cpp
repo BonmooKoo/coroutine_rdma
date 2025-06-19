@@ -22,7 +22,7 @@
 #include <signal.h>
 using namespace std;
 #define MAXTHREAD 32
-#define TOTALOP 32000000//32M
+#define TOTALOP 64000000//32M
 //#define SIZEOFNODE 4096 
 static int* key=new int[TOTALOP];
 int cs_num;
@@ -175,6 +175,7 @@ main (int argc, char **argv)
     {
       threadlist[i].join ();
     }
+ sleep(10);
   printf ("Start test\n");
   timespec t1, t2;
   clock_gettime (CLOCK_MONOTONIC_RAW, &t1);

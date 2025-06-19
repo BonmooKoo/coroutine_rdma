@@ -1,8 +1,8 @@
 #must be sudo
 
-PERF_LOG="perf_log.csv"
-BMC_LOG="bmc_log.csv"
-MERGED_LOG="power_log.csv"
+PERF_LOG="./tmp/perf_log.csv"
+BMC_LOG="./tmp/bmc_log.csv"
+MERGED_LOG="./tmp/power_log.csv"
 
 rm -f $PERF_LOG $BMC_LOG $MERGED_LOG
 
