@@ -64,6 +64,8 @@ static std::atomic<uint64_t> g_ops_started{0};
 static std::atomic<uint64_t> g_ops_finished{0};
 static int get_key(int thread_id){
    uint64_t idx = g_ops_started.fetch_add(1, std::memory_order_relaxed);
+//   if(idx%100000==0)
+//	printf("idx : %d\n",idx);
    return key[(TOTALOP/threadcount)*thread_id+idx];
 //	return key[cur_ops++];
 }
@@ -114,13 +116,13 @@ test_read (int id)
 static 
 void thread_worker(int thread_id,int worker_num,std::mutex* my_mtx,std::condition_variable* my_cv)
 {
-   bind_cpu(thread_id);
-  printf("[Thread %d - %d] start op\n",thread_id,worker_num);
+  bind_cpu(thread_id);
+  //printf("[Thread %d - %d] start op\n",thread_id,worker_num);
   std::mutex& q_mtx = *my_mtx;
   std::condition_variable& q_cv = *my_cv;
   //printf("here?\n");
    while(g_ops_started < TOTALOP){
-    printf("[Thread %d - %d] start op\n",thread_id,worker_num);
+    //printf("[Thread %d - %d] start op\n",thread_id,worker_num);
     rdma_read_nopoll((get_key(thread_id) % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,thread_id,worker_num);//(master의 WQ를 사용) worker_num를 coro_id처럼 사용
     {
       std::unique_lock<std::mutex> lock(q_mtx);
@@ -128,7 +130,7 @@ void thread_worker(int thread_id,int worker_num,std::mutex* my_mtx,std::conditio
       q_cv.wait(lock); // master가 notify할 때까지 sleep
     }
     //poll 끝났음 do sth 여기선 그냥 nothing
-    printf("[Thread %d - %d] wakeup\n",thread_id,worker_num);
+    //printf("[Thread %d - %d] wakeup\n",thread_id,worker_num);
     ++g_ops_finished;
   }
 }
@@ -148,13 +150,15 @@ static void thread_master(int thread_id,int worker_count)
   for (int i = 0; i < worker_count; i++) {
       worker.emplace_back(&thread_worker, thread_id, i, mtx_list[i], cv_list[i]);   
       //worker[i] = thread(&thread_worker,thread_id,i, mtx_list[i], cv_list[i]);
+      std::this_thread::yield();
   }
+  /*
   for (int i=0;i<worker_count;i++){
        std::lock_guard<std::mutex> lock(*mtx_list[i]);
        cv_list[i]->notify_one();
        cv_list[i]->wait(lock);
   }
-
+  */
   //2)poll 수행
   while (g_ops_finished < TOTALOP) {
     //printf("[Master : poll]\n");
@@ -164,8 +168,9 @@ static void thread_master(int thread_id,int worker_count)
     }
     else{
       {
-         std::lock_guard<std::mutex> lock(*mtx_list[next_id]);
+         std::unique_lock<std::mutex> lock(*mtx_list[next_id]);
          cv_list[next_id]->notify_one();
+         cv_list[next_id]->wait(lock); 
       }
     }
   }
@@ -256,7 +261,7 @@ main (int argc, char **argv)
 	 threadlist[i] = thread (&run_coroutine,i,coroutine,key,threadcount,TOTALOP/threadcount);
    }
    else{
-	threadlist[i] = thread (&thread_master,i,20);
+	threadlist[i] = thread (&thread_master,i,5);
 	//threadlist[i] = thread(&test_read,i);
    }
   }
