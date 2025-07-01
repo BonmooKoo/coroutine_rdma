@@ -124,8 +124,8 @@ void thread_worker(int thread_id,int worker_num)
   if(ret!=0){
         perror("pthread_setaffinity_np");
   }
-  std::mutex& q_mtx = *mtx_list[worker_id];
-  std::condition_variable& q_cv = *cv_list[worker_id];
+  std::mutex& q_mtx = *mtx_list[worker_num];
+  std::condition_variable& q_cv = *cv_list[worker_num];
   while(g_ops_started < TOTALOP){
     rdma_read_nopoll((get_key(thread_id) % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,thread_id,worker_num);//(master의 WQ를 사용) worker_num를 coro_id처럼 사용
     {
@@ -146,12 +146,12 @@ static void thread_master(int thread_id,int worker_count)
         perror("pthread_setaffinity_np");
   }
   std::vector<std::thread> worker;
-  for (int i = 0; i < worker_count; ++i) {
+  for (int i = 0; i < worker_count; i++) {
         mtx_list.push_back(new std::mutex());
         cv_list.push_back(new std::condition_variable());
     }
 //1)worker thread 생성 ( 바로 실행됨 )
-  for (int i = 0; i < coro_cnt; ++i) {
+  for (int i = 0; i < worker_count; i++) {
     worker[i] = thread(&thread_worker,thread_id,i);
   }
 //2)poll 수행
@@ -254,10 +254,7 @@ main (int argc, char **argv)
 	 threadlist[i] = thread (&run_coroutine,i,coroutine,key,threadcount,TOTALOP/threadcount);
    }
    else{
-	if(i==0)
-		threadlist[i] = thread (&test_master,i);
-	else
-		threadlist[i] = thread (&test_worker,i);
+	threadlist[i] = thread (&thread_master,i,5);
 
 	//threadlist[i] = thread(&test_read,i);
    }
