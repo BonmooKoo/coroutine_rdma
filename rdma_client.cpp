@@ -14,6 +14,7 @@
 #include <climits>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 #include <chrono>
 #include <vector>
 #include <algorithm>
@@ -103,7 +104,7 @@ test_read (int id)
   printf ("[%d]START\n", id);
   while (cur_ops<TOTALOP)
     {
-      int suc = rdma_read ((get_key() % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE, SIZEOFNODE, 0, id);	//return current value
+      int suc = rdma_read ((get_key(id) % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE, SIZEOFNODE, 0, id);	//return current value
     }
   printf ("[%d]END\n", id);
 }
@@ -125,11 +126,8 @@ void thread_worker(int thread_id,int worker_num)
   }
   std::mutex& q_mtx = *mtx_list[worker_id];
   std::condition_variable& q_cv = *cv_list[worker_id];
-  int key;
   while(g_ops_started < TOTALOP){
-    
-    key=fetch_key();
-    rdma_read_nopoll((key % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,thread_id,worker_num);//(master의 WQ를 사용) worker_num를 coro_id처럼 사용
+    rdma_read_nopoll((get_key(thread_id) % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,thread_id,worker_num);//(master의 WQ를 사용) worker_num를 coro_id처럼 사용
     {
       std::unique_lock<std::mutex> lock(q_mtx);
       q_cv.wait(lock); // master가 notify할 때까지 sleep
