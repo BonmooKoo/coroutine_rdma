@@ -61,11 +61,9 @@ int read_key(){
 }
 static std::atomic<uint64_t> g_ops_started{0};
 static std::atomic<uint64_t> g_ops_finished{0};
-static int get_key(){
+static int get_key(int thread_id){
    uint64_t idx = g_ops_started.fetch_add(1, std::memory_order_relaxed);
-   //printf("idx : %d\n",idx);
-   idx=idx%g_total_ops;//g_total_ops = TOTALOP = 32M
-   return key[g_total_ops*thread_id+idx];
+   return key[(TOTALOP/threadcount)*thread_id+idx];
 //	return key[cur_ops++];
 }
 void
@@ -109,39 +107,72 @@ test_read (int id)
     }
   printf ("[%d]END\n", id);
 }
-static void thread_worker(int thread_id)
+
+thread_local std::mutex q_mtx;
+thread_local std::condition_variable q_cv;
+thread_local std::vector<std::condition_variable*> cv_list;
+thread_local std::vector<std::mutex*> mtx_list;
+static 
+void thread_worker(int thread_id,int worker_num)
 {
   pthread_t this_thread = pthread_self();
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
-  CPU_SET(0,&cpuset);
+  CPU_SET(thread_id,&cpuset);
   int ret = pthread_setaffinity_np(this_thread, sizeof(cpu_set_t), &cpuset);
   if(ret!=0){
         perror("pthread_setaffinity_np");
   }
+  std::mutex& q_mtx = *mtx_list[worker_id];
+  std::condition_variable& q_cv = *cv_list[worker_id];
   int key;
-  while(g_ops_started < g_total_ops){
+  while(g_ops_started < TOTALOP){
+    
     key=fetch_key();
-    rdma_read_nopoll((key % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,0,thread_id);//thread =0 (master의 WQ를 사용) threadid를 coro_id처럼 사용
-    yield(master);
-    ++g_ops_finished;
+    rdma_read_nopoll((key % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,thread_id,worker_num);//(master의 WQ를 사용) worker_num를 coro_id처럼 사용
+    {
+      std::unique_lock<std::mutex> lock(q_mtx);
+      q_cv.wait(lock); // master가 notify할 때까지 sleep
+    }
+    //poll 끝났음 do sth 여기선 그냥 nothing
   }
-  yield(master);
 }
 static void thread_master(int thread_id,int worker_count)
 {
   pthread_t this_thread = pthread_self();
   cpu_set_t cpuset;
   CPU_ZERO(&cpuset);
-  CPU_SET(0,&cpuset);
+  CPU_SET(thread_id,&cpuset);
   int ret = pthread_setaffinity_np(this_thread, sizeof(cpu_set_t), &cpuset);
   if(ret!=0){
         perror("pthread_setaffinity_np");
   }
-  for(int i=0;i<worker_count;i++){
-	
-
+  std::vector<std::thread> worker;
+  for (int i = 0; i < worker_count; ++i) {
+        mtx_list.push_back(new std::mutex());
+        cv_list.push_back(new std::condition_variable());
+    }
+//1)worker thread 생성 ( 바로 실행됨 )
+  for (int i = 0; i < coro_cnt; ++i) {
+    worker[i] = thread(&thread_worker,thread_id,i);
   }
+//2)poll 수행
+  while (g_ops_finished < TOTALOP) {
+    int next_id=poll_coroutine(thread_id); // ret : -1 : failed / 0~ : coro_id
+    if(next_id<0){
+      continue;
+    }
+    else{
+      {
+            std::lock_guard<std::mutex> lock(*mtx_list[next_id]);
+            cv_list[next_id]->notify_one();
+      }
+      ++g_ops_finished;
+    }
+  }
+    for (auto& t : worker) {
+        t.join();
+    }
 }
 auto filter_and_analyze = [](uint64_t lat_arr[][TOTALOP / MAXTHREAD], const char* label, int count) {
     std::vector<uint64_t> merged;
