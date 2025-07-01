@@ -156,10 +156,10 @@ static void thread_master(int thread_id,int worker_count)
 //1)worker thread 생성 ( 바로 실행됨 )
   for (int i = 0; i < worker_count; i++) {
       worker.emplace_back(&thread_worker, thread_id, i, mtx_list[i], cv_list[i]);   
-      // worker[i] = thread(&thread_worker,thread_id,i, &mtx_list[i], &cv_list[i]);
+       //worker[i] = thread(&thread_worker,thread_id,i, mtx_list[i], cv_list[i]);
   }
 
- std::this_thread::yield();
+// std::this_thread::yield();
 //2)poll 수행
   while (g_ops_finished < TOTALOP) {
     printf("[Master : poll]\n");
