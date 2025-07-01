@@ -109,12 +109,8 @@ test_read (int id)
   printf ("[%d]END\n", id);
 }
 
-thread_local std::mutex q_mtx;
-thread_local std::condition_variable q_cv;
-thread_local std::vector<std::condition_variable*> cv_list;
-thread_local std::vector<std::mutex*> mtx_list;
 static 
-void thread_worker(int thread_id,int worker_num)
+void thread_worker(int thread_id,int worker_num,std::mutex* my_mtx,std::condition_variable* my_cv)
 {
   pthread_t this_thread = pthread_self();
   cpu_set_t cpuset;
@@ -124,15 +120,19 @@ void thread_worker(int thread_id,int worker_num)
   if(ret!=0){
         perror("pthread_setaffinity_np");
   }
-  std::mutex& q_mtx = *mtx_list[worker_num];
-  std::condition_variable& q_cv = *cv_list[worker_num];
+  //printf("[Thread %d - %d] start op\n",thread_id,worker_num);
+  std::mutex& q_mtx = *my_mtx;
+  std::condition_variable& q_cv = *my_cv;
+  //printf("here?\n");
   while(g_ops_started < TOTALOP){
+    printf("[Thread %d - %d] start op\n",thread_id,worker_num);
     rdma_read_nopoll((get_key(thread_id) % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,thread_id,worker_num);//(master의 WQ를 사용) worker_num를 coro_id처럼 사용
     {
       std::unique_lock<std::mutex> lock(q_mtx);
       q_cv.wait(lock); // master가 notify할 때까지 sleep
     }
     //poll 끝났음 do sth 여기선 그냥 nothing
+    printf("[Thread %d - %d] wakeup\n",thread_id,worker_num);
   }
 }
 static void thread_master(int thread_id,int worker_count)
@@ -145,17 +145,24 @@ static void thread_master(int thread_id,int worker_count)
   if(ret!=0){
         perror("pthread_setaffinity_np");
   }
+  std::vector<std::condition_variable*> cv_list;
+  std::vector<std::mutex*> mtx_list;
   std::vector<std::thread> worker;
   for (int i = 0; i < worker_count; i++) {
         mtx_list.push_back(new std::mutex());
         cv_list.push_back(new std::condition_variable());
     }
+  printf("[Master %d] Make workers \n",thread_id);
 //1)worker thread 생성 ( 바로 실행됨 )
   for (int i = 0; i < worker_count; i++) {
-    worker[i] = thread(&thread_worker,thread_id,i);
+      worker.emplace_back(&thread_worker, thread_id, i, mtx_list[i], cv_list[i]);   
+      // worker[i] = thread(&thread_worker,thread_id,i, &mtx_list[i], &cv_list[i]);
   }
+
+ std::this_thread::yield();
 //2)poll 수행
   while (g_ops_finished < TOTALOP) {
+    printf("[Master : poll]\n");
     int next_id=poll_coroutine(thread_id); // ret : -1 : failed / 0~ : coro_id
     if(next_id<0){
       continue;
@@ -255,7 +262,6 @@ main (int argc, char **argv)
    }
    else{
 	threadlist[i] = thread (&thread_master,i,5);
-
 	//threadlist[i] = thread(&test_read,i);
    }
   }
