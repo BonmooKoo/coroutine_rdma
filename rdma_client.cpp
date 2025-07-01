@@ -59,8 +59,14 @@ int read_key(){
     */
     return 0;
 }
+static std::atomic<uint64_t> g_ops_started{0};
+static std::atomic<uint64_t> g_ops_finished{0};
 static int get_key(){
-	return key[cur_ops++];
+   uint64_t idx = g_ops_started.fetch_add(1, std::memory_order_relaxed);
+   //printf("idx : %d\n",idx);
+   idx=idx%g_total_ops;//g_total_ops = TOTALOP = 32M
+   return key[g_total_ops*thread_id+idx];
+//	return key[cur_ops++];
 }
 void
 cleanup_rdma ()
@@ -103,7 +109,40 @@ test_read (int id)
     }
   printf ("[%d]END\n", id);
 }
+static void thread_worker(int thread_id)
+{
+  pthread_t this_thread = pthread_self();
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(0,&cpuset);
+  int ret = pthread_setaffinity_np(this_thread, sizeof(cpu_set_t), &cpuset);
+  if(ret!=0){
+        perror("pthread_setaffinity_np");
+  }
+  int key;
+  while(g_ops_started < g_total_ops){
+    key=fetch_key();
+    rdma_read_nopoll((key % (ALLOCSIZE / SIZEOFNODE)) * SIZEOFNODE,8, 0,0,thread_id);//thread =0 (master의 WQ를 사용) threadid를 coro_id처럼 사용
+    yield(master);
+    ++g_ops_finished;
+  }
+  yield(master);
+}
+static void thread_master(int thread_id,int worker_count)
+{
+  pthread_t this_thread = pthread_self();
+  cpu_set_t cpuset;
+  CPU_ZERO(&cpuset);
+  CPU_SET(0,&cpuset);
+  int ret = pthread_setaffinity_np(this_thread, sizeof(cpu_set_t), &cpuset);
+  if(ret!=0){
+        perror("pthread_setaffinity_np");
+  }
+  for(int i=0;i<worker_count;i++){
+	
 
+  }
+}
 auto filter_and_analyze = [](uint64_t lat_arr[][TOTALOP / MAXTHREAD], const char* label, int count) {
     std::vector<uint64_t> merged;
     for (int i = 0; i < MAXTHREAD; ++i) {
@@ -186,7 +225,12 @@ main (int argc, char **argv)
 	 threadlist[i] = thread (&run_coroutine,i,coroutine,key,threadcount,TOTALOP/threadcount);
    }
    else{
-	threadlist[i] = thread (&test_read,i);
+	if(i==0)
+		threadlist[i] = thread (&test_master,i);
+	else
+		threadlist[i] = thread (&test_worker,i);
+
+	//threadlist[i] = thread(&test_read,i);
    }
   }
   for (int i = 0; i < threadcount; i++)
